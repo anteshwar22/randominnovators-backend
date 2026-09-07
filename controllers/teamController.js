@@ -1,5 +1,6 @@
 const TeamMember = require('../models/TeamMember');
 const { ALLOWED_CATEGORIES } = require('../models/TeamMember');
+const { incrementPublicDataVersion } = require('../utils/versionHelper');
 const { uploadToImageKit } = require('../config/imagekit');
 const mongoose = require('mongoose');
 
@@ -69,7 +70,7 @@ const getTeamMembers = async (req, res) => {
 
     if (isDbConnected()) {
       const filter = normalizedCategory ? { category: normalizedCategory } : {};
-      const members = await TeamMember.find(filter).sort({ createdAt: -1 });
+      const members = await TeamMember.find(filter).sort({ createdAt: -1 }).lean();
       return res.status(200).json({
         success: true,
         count: members.length,
@@ -193,6 +194,7 @@ const createTeamMember = async (req, res) => {
       console.log('Memory Insert Success:', member._id);
     }
 
+    await incrementPublicDataVersion();
     return res.status(201).json({
       success: true,
       message: 'Team member created successfully',
@@ -277,6 +279,7 @@ const updateTeamMember = async (req, res) => {
       console.log('Memory Update Success:', member._id);
     }
 
+    await incrementPublicDataVersion();
     return res.status(200).json({
       success: true,
       message: 'Team member updated successfully',
@@ -314,6 +317,7 @@ const deleteTeamMember = async (req, res) => {
       console.log('Memory Delete Success:', req.params.id);
     }
 
+    await incrementPublicDataVersion();
     return res.status(200).json({
       success: true,
       message: 'Team member deleted successfully'

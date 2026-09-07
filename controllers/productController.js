@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const mongoose = require('mongoose');
+const { incrementPublicDataVersion } = require('../utils/versionHelper');
 
 // In-memory fallback storage
 let memoryProducts = [
@@ -29,7 +30,7 @@ const isDbConnected = () => mongoose.connection && mongoose.connection.readyStat
 const getProducts = async (req, res) => {
   try {
     if (isDbConnected()) {
-      const products = await Product.find().sort({ createdAt: -1 });
+      const products = await Product.find().sort({ createdAt: -1 }).lean();
       return res.status(200).json({ success: true, count: products.length, data: products });
     }
     
@@ -84,6 +85,7 @@ const createProduct = async (req, res) => {
       memoryProducts.unshift(product);
     }
 
+    await incrementPublicDataVersion();
     return res.status(201).json({ success: true, message: 'Product created successfully', data: product });
   } catch (error) {
     console.error('Create Product Error:', error);
@@ -121,6 +123,7 @@ const updateProduct = async (req, res) => {
       Object.assign(product, updateFields);
     }
 
+    await incrementPublicDataVersion();
     return res.status(200).json({ success: true, message: 'Product updated successfully', data: product });
   } catch (error) {
     console.error('Update Product Error:', error);
@@ -145,6 +148,7 @@ const deleteProduct = async (req, res) => {
       memoryProducts.splice(index, 1);
     }
 
+    await incrementPublicDataVersion();
     return res.status(200).json({ success: true, message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Delete Product Error:', error);

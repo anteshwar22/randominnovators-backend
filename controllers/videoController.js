@@ -1,5 +1,6 @@
 const Video = require('../models/Video');
 const mongoose = require('mongoose');
+const { incrementPublicDataVersion } = require('../utils/versionHelper');
 
 // In-memory fallback storage for videos when MongoDB connection is unavailable
 let memoryVideos = [
@@ -58,7 +59,13 @@ const getVideos = async (req, res) => {
 
     if (isDbConnected()) {
       const filter = fetchAll ? {} : { isActive: true };
-      const videos = await Video.find(filter).sort({ priority: 1, createdAt: 1 });
+      let query = Video.find(filter).sort({ priority: 1, createdAt: 1 }).lean();
+      
+      if (req.query.limit) {
+        query = query.limit(Number(req.query.limit));
+      }
+      
+      const videos = await query;
       return res.status(200).json({
         success: true,
         count: videos.length,
@@ -77,6 +84,10 @@ const getVideos = async (req, res) => {
       if (pA !== pB) return pA - pB;
       return new Date(a.createdAt) - new Date(b.createdAt);
     });
+
+    if (req.query.limit) {
+      result = result.slice(0, Number(req.query.limit));
+    }
 
     return res.status(200).json({
       success: true,
@@ -189,6 +200,7 @@ const createVideo = async (req, res) => {
       console.log('Memory Insert Video Success:', video._id);
     }
 
+    await incrementPublicDataVersion();
     return res.status(201).json({
       success: true,
       message: 'Video added successfully',
@@ -278,6 +290,7 @@ const updateVideo = async (req, res) => {
       console.log('Memory Update Video Success:', video._id);
     }
 
+    await incrementPublicDataVersion();
     return res.status(200).json({
       success: true,
       message: 'Video updated successfully',
@@ -315,6 +328,7 @@ const deleteVideo = async (req, res) => {
       console.log('Memory Delete Video Success:', req.params.id);
     }
 
+    await incrementPublicDataVersion();
     return res.status(200).json({
       success: true,
       message: 'Video deleted successfully'

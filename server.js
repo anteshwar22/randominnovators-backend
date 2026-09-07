@@ -59,6 +59,27 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+const mongoose = require('mongoose');
+const DataVersion = require('./models/DataVersion');
+
+// Extremely lightweight endpoint to check if public data has changed
+let memoryDataVersion = 1;
+app.get('/api/data-version', async (req, res) => {
+  try {
+    if (mongoose.connection && mongoose.connection.readyState === 1) {
+      const doc = await DataVersion.findOne({ key: 'public-data-version' }).lean();
+      if (doc) {
+        return res.status(200).json({ version: doc.version });
+      }
+    }
+    // Fallback if DB is disconnected or document doesn't exist yet
+    return res.status(200).json({ version: memoryDataVersion });
+  } catch (err) {
+    // Return a safe fallback rather than failing
+    return res.status(200).json({ version: memoryDataVersion });
+  }
+});
+
 // 404 Handler
 app.use((req, res) => {
   res.status(404).json({
