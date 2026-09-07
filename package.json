@@ -1,0 +1,23 @@
+{
+  "name": "edupulse-backend",
+  "version": "1.0.0",
+  "description": "EduPulse Learning Platform REST API Backend",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "seed": "node seed.js",
+    "test:e2e": "node test_e2e.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "imagekit": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.9.3",
+    "multer": "^2.3.0"
+  }
+}
