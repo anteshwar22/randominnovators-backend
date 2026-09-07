@@ -55,6 +55,10 @@ app.get('/', (req, res) => {
   });
 });
 
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // 404 Handler
 app.use((req, res) => {
   res.status(404).json({
