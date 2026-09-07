@@ -18,23 +18,26 @@ const app = express();
 
 // Middleware
 const allowedOrigins = process.env.FRONTEND_URL 
-  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/$/, ''))
   : ['https://randominnovators.vercel.app', 'http://localhost:5173'];
 
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     
-    // Support Vercel preview deployments or exact matches
-    const isVercelPreview = origin.endsWith('.vercel.app');
+    const cleanOrigin = origin.replace(/\/$/, '');
+    const isVercelPreview = cleanOrigin.endsWith('.vercel.app');
     
-    if (allowedOrigins.indexOf(origin) !== -1 || isVercelPreview) {
-      callback(null, true);
+    if (allowedOrigins.includes(cleanOrigin) || isVercelPreview) {
+      callback(null, cleanOrigin); // Reflect the origin back
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(null, false); // Return false instead of Error to avoid 500 response
     }
   },
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-key', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 }));
 app.use(express.json());
 
@@ -62,6 +65,10 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  });
+}
+
+module.exports = app;
